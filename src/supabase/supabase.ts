@@ -1,10 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_SECRET!;
-
-export const supabase = createClient(supabaseUrl, supabaseKey, {
-  db: {
-    schema: "next_auth",
-  },
-});
+export const supabase = createClient(
+  "https://tgflofomuccihdarnnvj.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRnZmxvZm9tdWNjaWhkYXJubnZqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTcyODQ4NjM0NCwiZXhwIjoyMDQ0MDYyMzQ0fQ.TCLHuHF2ZCKpmWEidK6BxWeM2D9rTR2WIn46tPWfTAk"
+);
