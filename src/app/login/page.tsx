@@ -3,18 +3,14 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/router";
 
-export default function Login() {
-  const router = useRouter();
-
+const Login = () => {
   const signInWithProvider = async (provider: string) => {
     await signIn(provider);
-    router.push("/carpool");
   };
 
   return (
-    <div className="h-svh flex justify-center">
+    <div className="h-svh flex justify-center items-center">
       <Card>
         <h1>Connectez-vous</h1>
         <Button
@@ -27,4 +23,6 @@ export default function Login() {
       </Card>
     </div>
   );
-}
+};
+
+export default Login;

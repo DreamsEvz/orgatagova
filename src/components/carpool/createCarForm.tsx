@@ -120,7 +120,7 @@ const CreateCarForm = () => {
               <FormItem>
                 <FormLabel>Nombre de places</FormLabel>
                 <FormControl>
-                  <Input type="number" {...field}></Input>
+                  <Input type="number" min={1} max={10} {...field}></Input>
                 </FormControl>
                 <FormMessage />
               </FormItem>
