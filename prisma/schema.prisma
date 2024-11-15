@@ -2,11 +2,11 @@ datasource db {
   provider = "sqlite"
   url      = env("DATABASE_URL")
 }
- 
+
 generator client {
   provider = "prisma-client-js"
 }
- 
+
 model User {
   id            String          @id @default(cuid())
   name          String?
@@ -15,13 +15,16 @@ model User {
   image         String?
   accounts      Account[]
   sessions      Session[]
-  // Optional for WebAuthn support
-  Authenticator Authenticator[]
- 
+  Authenticator Authenticator[] // Optional for WebAuthn support
+
+  createdCarpools Carpool[]             @relation("CarpoolCreator")
+  joinedCarpools  CarpoolParticipants[]
+  soberDriverFor  Carpool[]             @relation("SoberDriver")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
- 
+
 model Account {
   id                String  @id @default(cuid())
   userId            String
@@ -35,34 +38,34 @@ model Account {
   scope             String?
   id_token          String?
   session_state     String?
- 
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
- 
+
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
- 
+
   @@unique([provider, providerAccountId])
 }
- 
+
 model Session {
   id           String   @id @default(cuid())
   sessionToken String   @unique
   userId       String
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
- 
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
- 
+
 model VerificationToken {
   identifier String
   token      String
   expires    DateTime
- 
+
   @@unique([identifier, token])
 }
- 
+
 // Optional for WebAuthn support
 model Authenticator {
   credentialID         String  @unique
@@ -73,8 +76,47 @@ model Authenticator {
   credentialDeviceType String
   credentialBackedUp   Boolean
   transports           String?
- 
+
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
- 
+
   @@id([userId, credentialID])
+}
+
+model Carpool {
+  id                  Int      @id @default(autoincrement())
+  departure           String
+  arrival             String
+  description         String?
+  departureDate       DateTime
+  departureTime       String
+  availableSeats      Int
+  isDriverSoberNeeded Boolean  @default(false)
+  soberDriverFound    Boolean  @default(false)
+  isPrivate           Boolean  @default(false)
+  privateCode         String?  @unique
+  isArchived          Boolean  @default(false)
+  isFinished          Boolean  @default(false)
+
+  createdBy User   @relation("CarpoolCreator", fields: [creatorId], references: [id])
+  creatorId String
+
+  participants CarpoolParticipants[]
+  soberDriver  User?                 @relation("SoberDriver", fields: [soberDriverId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  soberDriverId    String?
+}
+
+model CarpoolParticipants {
+  id        Int    @id @default(autoincrement())
+  userId    String
+  carpoolId Int
+
+  user    User    @relation(fields: [userId], references: [id])
+  carpool Carpool @relation(fields: [carpoolId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, carpoolId]) // Un utilisateur ne peut rejoindre le même covoiturage qu'une seule fois
 }

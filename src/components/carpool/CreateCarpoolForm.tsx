@@ -16,10 +16,11 @@ import { Textarea } from "@/src/components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { Switch } from "../ui/switch";
 
 const formSchema = z.object({
   departure: z.string().min(1, { message: "Le champ départ est requis" }),
-  destination: z.string(),
+  arrival: z.string(),
   description: z.string(),
   departureDate: z
     .string()
@@ -33,7 +34,9 @@ const formSchema = z.object({
       { message: "La date de départ doit être supérieure à la date actuelle" }
     ),
   departureTime: z.string().min(1, { message: "Le champ heure de départ est requis" }),
-  seats: z.string().min(1, { message: "Le champ nombre de places est requis" }),
+  availableSeats: z.string().min(1, { message: "Le champ nombre de places est requis" }),
+  isDriverSoberNeeded: z.boolean().optional(),
+  isPrivate: z.boolean().optional(),
 });
 
 const CreateCarForm = () => {
@@ -41,16 +44,29 @@ const CreateCarForm = () => {
     resolver: zodResolver(formSchema),
     defaultValues: {
       departure: "",
-      destination: "",
+      arrival: "",
       description: "",
       departureDate: "",
       departureTime: "",
-      seats: "",
+      availableSeats: "",
+      isDriverSoberNeeded: false,
+      isPrivate: false,
     },
   });
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
-    form.reset();
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    const response = await fetch("/api/carpool/new", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(values),
+    });
+    
+    const result = await response.json();
+    if (result.success) {
+      //form.reset();
+    }
   };
 
   return (
@@ -78,7 +94,7 @@ const CreateCarForm = () => {
               />
               <FormField
                 control={form.control}
-                name="destination"
+                name="arrival"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-teal-400">Destination</FormLabel>
@@ -150,7 +166,7 @@ const CreateCarForm = () => {
               />
               <FormField
                 control={form.control}
-                name="seats"
+                name="availableSeats"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-teal-400">Nombre de places</FormLabel>
@@ -167,10 +183,43 @@ const CreateCarForm = () => {
                   </FormItem>
                 )}
               />
+              <div className="flex flex-col gap-4 mt-4">
+    <FormField
+      control={form.control}
+      name="isDriverSoberNeeded"
+      render={({ field }) => (
+        <FormItem className="flex items-center justify-between space-y-0">
+          <FormLabel className="text-teal-400">Besoin d'un conducteur sobre ?</FormLabel>
+          <FormControl>
+            <Switch 
+              checked={field.value} 
+              onCheckedChange={field.onChange}
+              className="data-[state=checked]:bg-teal-500"
+            />
+          </FormControl>
+        </FormItem>
+      )}
+    />
+
+    <FormField
+      control={form.control}
+      name="isPrivate"
+      render={({ field }) => (
+        <FormItem className="flex items-center justify-between space-y-0">
+          <FormLabel className="text-teal-400">Covoiturage privé ?</FormLabel>
+          <FormControl>
+            <Switch 
+              checked={field.value} 
+              onCheckedChange={field.onChange}
+              className="data-[state=checked]:bg-teal-500"
+            />
+          </FormControl>
+        </FormItem>
+      )}
+    />
+  </div>
             </div>
           </div>
-
-          {/* Bouton de soumission centré en bas */}
           <div className="flex mx-auto mt-6">
             <Button
               type="submit"
