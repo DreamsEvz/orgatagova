@@ -1,4 +1,4 @@
-import { createCarpoolAction } from "@/app/carpool/new/carpool.action";
+import { createCarpoolAction } from "@/app/carpool/carpool.action";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
