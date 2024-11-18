@@ -9,7 +9,6 @@ export async function createCarpoolAction(data: any) {
   const currentUserId: string | null = await getCurrentUserId();
 
   try {
-    // Ensure fields that can be null are correctly assigned
     const privateCode = data.isPrivate ? generatePrivateCode() : null;
 
     // Step 1: Create the carpool
@@ -32,7 +31,6 @@ export async function createCarpoolAction(data: any) {
       },
     });
 
-    // Step 2: Add the creator as a participant
     await prisma.carpoolParticipants.create({
       data: {
         userId: currentUserId as string,
@@ -44,5 +42,40 @@ export async function createCarpoolAction(data: any) {
   } catch (error) {
     console.error(error);
     return null;
+  }
+}
+
+
+export async function joinCarpoolAction(carpoolId: number) {
+  const currentUserId: string | null = await getCurrentUserId();
+
+  try {
+    await prisma.carpoolParticipants.create({
+      data: {
+        userId: currentUserId as string,
+        carpoolId: carpoolId,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+export async function joinCarpoolAsSoberAction(carpoolId: number) {
+  const currentUserId: string | null = await getCurrentUserId();
+
+  try {
+    await prisma.carpoolParticipants.create({
+      data: {
+        userId: currentUserId as string,
+        carpoolId: carpoolId,
+      },
+    });
+    await prisma.carpool.update({
+      where: { id: carpoolId },
+      data: { soberDriverId: currentUserId as string, soberDriverFound: true },
+    });
+  } catch (error) {
+    console.error(error);
   }
 }
