@@ -79,3 +79,50 @@ export async function joinCarpoolAsSoberAction(carpoolId: number) {
     console.error(error);
   }
 }
+
+export async function finishCarpoolAction(carpoolId: number) {
+  try {
+    await prisma.carpool.update({
+      where: { id: carpoolId },
+      data: { isFinished: true },
+    });
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+export async function getUserUnFinishedCarpools() {
+  const currentUserId: string | null = await getCurrentUserId();
+
+  const carpools = await prisma.carpool.findMany({
+    where: { isFinished: false, participants: { some: { userId: currentUserId as string } } },
+  });
+
+  return carpools;
+}
+
+export async function findUniqueCarpool(carpoolId: number) {
+  const carpool = await prisma.carpool.findUnique({
+    where: { id: carpoolId },
+  });
+  return carpool;
+}
+
+export type CarpoolStatus = "finished" | "archived" | "ongoing"
+
+export async function getCarpoolStatus(carpoolId: number) {
+  const carpool = await prisma.carpool.findUnique({
+    where: { id: carpoolId },
+  });
+
+  
+  if (carpool?.isFinished) {
+    return "finished" as CarpoolStatus;
+  }
+
+  if (carpool?.isArchived) {
+    return "archived" as CarpoolStatus;
+  }
+
+  return "ongoing" as CarpoolStatus;
+}
