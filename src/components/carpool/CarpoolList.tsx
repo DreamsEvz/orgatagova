@@ -5,9 +5,9 @@ import { Card } from "../ui/card";
 
 export function CarpoolList({carpools }: { carpools: Carpool[] }) {
   return (
-    <div className="flex flex-col items-center justify-center max-w-3xl max-h-[70vh] overflow-y-auto">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 pr-10 items-center max-w-full max-h-[70vh] overflow-y-auto">
       {carpools.map((carpool) => (
-        <CarpoolListCard carpool={carpool} />
+        <CarpoolListCard carpool={carpool} key={carpool.id} />
       ))}
     </div>
   );
