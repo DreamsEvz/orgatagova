@@ -4,14 +4,15 @@ import { ConfirmAlertDialog } from "@/src/components/shared/ConfirmAlertDialog";
 import { Badge } from "@/src/components/ui/badge";
 import { Button } from "@/src/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/src/components/ui/card";
-import { Carpool } from "@prisma/client";
+import { Carpool, User } from "@prisma/client";
 import { use, useEffect, useState } from "react";
-import { FaCar } from "react-icons/fa";
-import { CarpoolStatus, findUniqueCarpool, finishCarpoolAction, getCarpoolStatus } from "../../carpool.action";
+import { FaCar, FaCrown } from "react-icons/fa";
+import { CarpoolStatus, findUniqueCarpool, finishCarpoolAction, getCarpoolParticipants, getCarpoolStatus } from "../../carpool.action";
 
 export default function Page({ params }: {  params: Promise<{ userId: string; carpoolId: string }>}) {
   const [carpool, setCarpool] = useState<Carpool | null>(null);
   const [status, setStatus] = useState<CarpoolStatus | null>(null);
+  const [participants, setParticipants] = useState<User[] | null>(null);
   const {carpoolId } = use(params);
 
   useEffect(() => {
@@ -24,6 +25,11 @@ export default function Page({ params }: {  params: Promise<{ userId: string; ca
         console.log(data);
       })
       .catch(error => console.error('Error fetching carpool status:', error));
+    getCarpoolParticipants(parseInt(carpoolId))
+      .then(data => {
+        setParticipants(data ? data : null);
+      })
+      .catch(error => console.error('Error fetching carpool participants:', error));
   }, []);
 
   const getStatusColorAndText = (status: CarpoolStatus) => {
@@ -33,8 +39,12 @@ export default function Page({ params }: {  params: Promise<{ userId: string; ca
     return { color: "bg-gray-400", text: "Inconnu" };
   }
 
+  const isUserCarpoolOwner = (participantId: string) => {
+    return participantId === carpool?.creatorId;
+  }
+
   return (
-    <main className="flex min-h-screen items-center justify-center p-4">
+    <main className="flex min-h-screen items-center justify-center p-4 gap-6">
       <Card className="w-full max-w-md transition-transform duration-200 bg-gray-800/60 border-gray-700 shadow-xl">
         <CardHeader className="space-y-2">
           <CardTitle className="flex justify-between text-2xl text-teal-400 flex items-center gap-2">
@@ -92,11 +102,27 @@ export default function Page({ params }: {  params: Promise<{ userId: string; ca
               setStatus("finished");
             }}
           >
-            <Button>
+            <Button className="bg-teal-400 hover:bg-teal-500">
               Terminer le trajet
             </Button>
           </ConfirmAlertDialog>
         </CardFooter>
+      </Card>
+
+      <Card className="w-full max-w-md transition-transform duration-200 bg-gray-800/60 border-gray-700 shadow-xl">
+        <CardHeader className="space-y-2">
+          <CardTitle className="text-2xl text-teal-400">Participants</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {participants?.map((participant) => (
+            <div key={participant.id} className="flex items-center gap-2">
+              {isUserCarpoolOwner(participant.id) && (
+                <FaCrown className="text-yellow-400" />
+              )}
+              <p key={participant.id} className="text-gray-300">{participant.name}</p>
+            </div>
+          ))}
+        </CardContent>
       </Card>
     </main>
   );

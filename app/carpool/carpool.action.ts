@@ -3,7 +3,7 @@
 import { prisma } from "@/src/lib/prisma/prisma";
 import { getCurrentUserId } from "@/src/lib/serverUtils";
 import { generatePrivateCode } from "@/src/lib/utils";
-
+import { User } from "@prisma/client";
 
 export async function createCarpoolAction(data: any) {
   const currentUserId: string | null = await getCurrentUserId();
@@ -46,13 +46,11 @@ export async function createCarpoolAction(data: any) {
 }
 
 
-export async function joinCarpoolAction(carpoolId: number) {
-  const currentUserId: string | null = await getCurrentUserId();
-
+export async function joinCarpoolAction(carpoolId: number, userId: string) {
   try {
     await prisma.carpoolParticipants.create({
       data: {
-        userId: currentUserId as string,
+        userId: userId,
         carpoolId: carpoolId,
       },
     });
@@ -61,24 +59,7 @@ export async function joinCarpoolAction(carpoolId: number) {
   }
 }
 
-export async function joinCarpoolAsSoberAction(carpoolId: number) {
-  const currentUserId: string | null = await getCurrentUserId();
-
-  try {
-    await prisma.carpoolParticipants.create({
-      data: {
-        userId: currentUserId as string,
-        carpoolId: carpoolId,
-      },
-    });
-    await prisma.carpool.update({
-      where: { id: carpoolId },
-      data: { soberDriverId: currentUserId as string, soberDriverFound: true },
-    });
-  } catch (error) {
-    console.error(error);
-  }
-}
+export async function joinCarpoolAsSoberAction(carpoolId: number) {}
 
 export async function finishCarpoolAction(carpoolId: number) {
   try {
@@ -126,3 +107,16 @@ export async function getCarpoolStatus(carpoolId: number) {
 
   return "ongoing" as CarpoolStatus;
 }
+
+export async function getCarpoolParticipants(carpoolId: number) {
+  const participants = await prisma.carpoolParticipants.findMany({
+    where: { carpoolId: carpoolId },
+  });
+
+  const participantsWithUser: User[] = await prisma.user.findMany({
+    where: { id: { in: participants.map((participant) => participant.userId) } },
+  });
+
+  return participantsWithUser;
+}
+

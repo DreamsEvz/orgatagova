@@ -32,31 +32,37 @@ export default function CarpoolHeader() {
         {/* Desktop Navigation */}
         <nav className="hidden sm:flex items-center gap-4 sm:gap-6">
           {pathname !== "/carpool/view" && (
-            <Button
-              variant="ghost"
-              className="flex items-center px-4 py-2 text-sm font-medium text-teal-400 hover:bg-teal-400/10 hover:text-teal-300 transition-all duration-200 rounded-lg"
-            >
-              <FaEye className="mr-2 h-4 w-4" />
-              <Link href="/carpool/view">Voir les covoiturages</Link>
-            </Button>
+            <Link href="/carpool/view" className="block">
+              <Button
+                variant="ghost"
+                className="flex items-center px-4 py-2 text-sm font-medium text-teal-400 hover:bg-teal-400/10 hover:text-teal-300 transition-all duration-200 rounded-lg"
+              >
+                <FaEye className="mr-2 h-4 w-4" />
+                Voir les covoiturages
+              </Button>
+            </Link>
           )}
           {pathname !== "/carpool/new" && (
-            <Button
-              variant="ghost"
-              className="flex items-center px-4 py-2 text-sm font-medium text-teal-400 hover:bg-teal-400/10 hover:text-teal-300 transition-all duration-200 rounded-lg"
-            >
-              <FaPlus className="mr-2 h-4 w-4" />
-              <Link href="/carpool/new">Créer un covoiturage</Link>
-            </Button>
+            <Link href="/carpool/new" className="block">
+              <Button
+                variant="ghost"
+                className="flex items-center px-4 py-2 text-sm font-medium text-teal-400 hover:bg-teal-400/10 hover:text-teal-300 transition-all duration-200 rounded-lg"
+              >
+                <FaPlus className="mr-2 h-4 w-4" />
+                Créer un covoiturage
+              </Button>
+            </Link>
           )}
           {pathname !== `/carpool/${userId}/list` && (
-            <Button
-              variant="ghost"
-              className="flex items-center px-4 py-2 text-sm font-medium text-teal-400 hover:bg-teal-400/10 hover:text-teal-300 transition-all duration-200 rounded-lg"
-            >
-              <FaList className="mr-2 h-4 w-4" />
-              <Link href={`/carpool/${userId}/list`}>Mes covoiturages</Link>
-            </Button>
+            <Link href={`/carpool/${userId}/list`} className="block">
+              <Button
+                variant="ghost"
+                className="flex items-center px-4 py-2 text-sm font-medium text-teal-400 hover:bg-teal-400/10 hover:text-teal-300 transition-all duration-200 rounded-lg"
+              >
+                <FaList className="mr-2 h-4 w-4" />
+                Mes covoiturages
+              </Button>
+            </Link>
           )}
         </nav>
 

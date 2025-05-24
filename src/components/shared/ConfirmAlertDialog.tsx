@@ -1,18 +1,19 @@
-import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/src/components/ui/alert-dialog";
-import { AlertDialogCancel } from "@radix-ui/react-alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/src/components/ui/alert-dialog";
 
 
 export function ConfirmAlertDialog({ children, title, description, onConfirm }: { children: React.ReactNode, title: string, description: string, onConfirm: () => void }) {
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>{children}</AlertDialogTrigger>
-      <AlertDialogContent>
+      <AlertDialogContent className="bg-gray-800/60 border-gray-700 shadow-xl">
         <AlertDialogHeader>
-          <AlertDialogTitle>{title}</AlertDialogTitle>
-            
+          <AlertDialogTitle className="text-teal-400">{title}</AlertDialogTitle>
+          <AlertDialogDescription className="text-gray-300">{description}</AlertDialogDescription>
         </AlertDialogHeader>
-          <AlertDialogCancel>Non</AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirm}>Oui</AlertDialogAction>
+        <AlertDialogFooter className="">
+          <AlertDialogCancel className="bg-red-400 hover:bg-red-500">Non</AlertDialogCancel>
+          <AlertDialogAction className="bg-green-400 hover:bg-green-500" onClick={onConfirm}>Oui</AlertDialogAction>
+        </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
   )
