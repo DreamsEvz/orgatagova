@@ -35,20 +35,27 @@ export default function CarpoolHeader() {
   return (
     <>
       {/* Desktop Header */}
-      <header className="hidden sm:flex items-center gap-6 p-4 sm:p-6 bg-gray-800/75 text-white shadow-md border-b border-gray-700">
-        <nav className="flex items-center gap-4 sm:gap-6">
+      <header className="hidden sm:flex items-center gap-6 p-4 sm:p-6 bg-gray-900/90 backdrop-blur-xl text-white shadow-2xl border-b border-white/10">
+        <nav className="flex items-center gap-3">
           {navigationItems.map((item) => (
             <Link key={item.href} href={item.href} className="block">
               <Button
                 variant="ghost"
-                className={`flex items-center px-4 py-2 text-sm font-medium transition-all duration-200 rounded-lg
+                className={`group relative flex items-center px-5 py-3 text-sm font-medium transition-all duration-200 rounded-xl backdrop-blur-sm border shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400/30
                   ${pathname === item.href 
-                    ? "text-teal-300 border-b-2 border-teal-400 hover:text-teal-200" 
-                    : "text-teal-400 hover:text-teal-300 hover:bg-teal-400/10"
+                    ? "text-white bg-teal-500/10 border-teal-400/20 hover:text-gray-100 hover:bg-teal-500/12 hover:border-teal-400/25 active:scale-95" 
+                    : "text-gray-300 bg-transparent border-white/8"
                   }`}
               >
-                {item.icon}
-                <span className="ml-2">{item.desktopLabel}</span>
+                <span className={`transition-transform duration-200 ${pathname === item.href ? 'text-teal-300' : 'group-hover:scale-110'}`}>
+                  {item.icon}
+                </span>
+                <span className="ml-3 relative">
+                  {item.desktopLabel}
+                  {pathname === item.href && (
+                    <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-teal-400 to-cyan-400 rounded-full"></span>
+                  )}
+                </span>
               </Button>
             </Link>
           ))}
@@ -58,9 +65,9 @@ export default function CarpoolHeader() {
           <Button
             onClick={() => signOut({ redirectTo: "/" })}
             variant="ghost"
-            className="flex items-center px-4 py-2 text-sm font-medium text-teal-400 hover:bg-teal-400/10 hover:text-teal-300 transition-all duration-200 rounded-lg"
+            className="group relative flex items-center px-5 py-3 text-sm font-medium text-gray-300 bg-transparent backdrop-blur-sm border border-white/8 hover:text-gray-200 hover:bg-red-500/3 hover:border-red-400/10 transition-all duration-200 rounded-xl shadow-sm active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400/30"
           >
-            <FaCog className="mr-2 h-4 w-4" />
+            <FaCog className="mr-3 h-4 w-4 transition-transform duration-200 group-hover:rotate-90" />
             Se déconnecter
           </Button>
         </div>
