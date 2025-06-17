@@ -3,7 +3,7 @@
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FaEye, FaList, FaPlus, FaCog, FaUserCircle } from "react-icons/fa";
+import { FaEye, FaList, FaPlus, FaUserCircle } from "react-icons/fa";
 import { Button } from "../ui/button";
 import React from "react";
 
@@ -68,10 +68,10 @@ export default function CarpoolHeader() {
       {/* Floating Profile Button (top right) */}
       <button
         onClick={() => signOut({ redirectTo: "/" })}
-        className="hidden sm:flex fixed top-8 right-10 z-50 bg-white/10 hover:bg-teal-500/20 text-teal-400 hover:text-white border border-white/20 shadow-lg rounded-full w-20 h-20 items-center justify-center transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400/50"
-        aria-label="Profil / Déconnexion"
+        className="flex fixed top-4 right-4 md:top-10 md:right-10 z-50 bg-white/10 hover:bg-teal-500/20 text-teal-400 hover:text-white border border-white/20 shadow-lg rounded-full w-16 h-16 items-center justify-center transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400/50"
+        aria-label="Profil"
       >
-        <FaUserCircle className="w-12 h-12" />
+        <FaUserCircle className="w-10 h-10" />
       </button>
 
       {/* Mobile Bottom Navigation Bar */}
@@ -91,13 +91,6 @@ export default function CarpoolHeader() {
               <span className="text-xs mt-1">{item.label}</span>
             </Link>
           ))}
-          <button
-            onClick={() => signOut({ redirectTo: "/" })}
-            className="flex flex-col items-center p-2 text-gray-400 hover:text-teal-400 rounded-lg transition-colors"
-          >
-            <FaCog className="h-5 w-5" />
-            <span className="text-xs mt-1">Réglages</span>
-          </button>
         </div>
       </nav>
 
