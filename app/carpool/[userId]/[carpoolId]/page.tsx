@@ -6,14 +6,15 @@ import { Button } from "@/src/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/src/components/ui/card";
 import { Carpool, User } from "@prisma/client";
 import { use, useEffect, useState } from "react";
-import { FaCar, FaCrown, FaTrash } from "react-icons/fa";
+import { FaCar, FaCheck, FaCopy, FaCrown, FaTrash } from "react-icons/fa";
 import { CarpoolStatus, deleteParticipantAction, findUniqueCarpool, finishCarpoolAction, getCarpoolParticipants, getCarpoolStatus } from "../../carpool.action";
 
 export default function Page({ params }: {  params: Promise<{ userId: string; carpoolId: string }>}) {
   const [carpool, setCarpool] = useState<Carpool | null>(null);
   const [status, setStatus] = useState<CarpoolStatus | null>(null);
   const [participants, setParticipants] = useState<User[] | null>(null);
-  const {carpoolId } = use(params);
+  const [isCopied, setIsCopied] = useState(false);
+  const {carpoolId} = use(params);
 
   useEffect(() => {
     findUniqueCarpool(parseInt(carpoolId))
@@ -46,6 +47,14 @@ export default function Page({ params }: {  params: Promise<{ userId: string; ca
   const removeParticipant = (participantId: string) => {
     setParticipants(participants?.filter((participant) => participant.id !== participantId) || []);
     deleteParticipantAction(parseInt(carpoolId), participantId);
+  }
+
+  const copyCode = () => {
+    navigator.clipboard.writeText(carpool?.invitationCode || "");
+    setIsCopied(true);
+    setTimeout(() => {
+      setIsCopied(false);
+    }, 2000);
   }
 
   return (
@@ -91,12 +100,12 @@ export default function Page({ params }: {  params: Promise<{ userId: string; ca
               <p className="text-gray-300">{carpool?.description}</p>
             </div>
           </div>
-          {carpool?.isPrivate && (
             <div className="space-y-2">
-              <span className="text-teal-400 font-medium">Code privé</span>
-              <p className="text-gray-300">{carpool?.privateCode}</p>
+              <span className="text-teal-400 font-medium">Code d'invitation</span>
+              <div className="flex items-center gap-2">
+                <p className="text-gray-300">{carpool?.invitationCode}</p> {isCopied ? <FaCheck className="text-teal-400" /> :  <FaCopy onClick={copyCode} className="text-teal-400 cursor-pointer" />}
+              </div>
             </div>
-          )}
         </CardContent>
         <CardFooter>
           <ConfirmAlertDialog

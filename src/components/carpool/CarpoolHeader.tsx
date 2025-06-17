@@ -1,11 +1,12 @@
 "use client";
 
-import { signOut, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FaEye, FaList, FaPlus, FaUserCircle } from "react-icons/fa";
-import { Button } from "../ui/button";
 import React from "react";
+import { FaEye, FaList, FaPlus, FaUserCircle } from "react-icons/fa";
+import ProfileComponent from "../profile/ProfileComponent";
+import { Button } from "../ui/button";
 
 export default function CarpoolHeader() {
   const { data: session } = useSession();
@@ -66,13 +67,13 @@ export default function CarpoolHeader() {
       </aside>
 
       {/* Floating Profile Button (top right) */}
-      <button
-        onClick={() => signOut({ redirectTo: "/" })}
-        className="flex fixed top-4 right-4 md:top-10 md:right-10 z-50 bg-white/10 hover:bg-teal-500/20 text-teal-400 hover:text-white border border-white/20 shadow-lg rounded-full w-16 h-16 items-center justify-center transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400/50"
-        aria-label="Profil"
-      >
-        <FaUserCircle className="w-10 h-10" />
-      </button>
+      <div className="fixed top-4 right-4 md:top-10 md:right-10 z-50">
+        <ProfileComponent session={session}>
+          <Button className="bg-white/10 hover:bg-teal-500/20 text-teal-400 hover:text-white border border-white/20 shadow-lg rounded-full w-16 h-16 items-center justify-center transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400/50" asChild>
+            <FaUserCircle className="w-10 h-10" />
+          </Button>
+        </ProfileComponent>
+      </div>
 
       {/* Mobile Bottom Navigation Bar */}
       <nav className="sm:hidden fixed bottom-0 left-0 right-0 bg-gray-800/95 border-t border-gray-700 px-2 py-2 backdrop-blur-lg z-50">

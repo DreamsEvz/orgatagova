@@ -93,7 +93,7 @@ model Carpool {
   isDriverSoberNeeded Boolean  @default(false)
   soberDriverFound    Boolean  @default(false)
   isPrivate           Boolean  @default(false)
-  privateCode         String?  @unique
+  invitationCode      String   @unique
   isArchived          Boolean  @default(false)
   isFinished          Boolean  @default(false)
 

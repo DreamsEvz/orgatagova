@@ -3,16 +3,15 @@
 import { prisma } from "@/src/lib/prisma/prisma";
 import { getCurrentUserId } from "@/src/lib/serverUtils";
 import { generatePrivateCode } from "@/src/lib/utils";
-import { User } from "@prisma/client";
+import { Carpool, User } from "@prisma/client";
 
 export async function createCarpoolAction(data: any) {
   const currentUserId: string | null = await getCurrentUserId();
 
   try {
-    const privateCode = data.isPrivate ? generatePrivateCode() : null;
+    const invitationCode = generatePrivateCode();
 
-    // Step 1: Create the carpool
-    const carpool = await prisma.carpool.create({
+    const carpool: Carpool = await prisma.carpool.create({
       data: {
         departure: data.departure,
         arrival: data.arrival,
@@ -23,7 +22,7 @@ export async function createCarpoolAction(data: any) {
         isDriverSoberNeeded: data.isDriverSoberNeeded,
         soberDriverFound: !data.isDriverSoberNeeded ? true : false,
         isPrivate: data.isPrivate,
-        privateCode: privateCode,
+        invitationCode: invitationCode,
         isArchived: false,
         isFinished: false,
         creatorId: currentUserId as string,
@@ -57,6 +56,30 @@ export async function joinCarpoolAction(carpoolId: number, userId: string) {
   } catch (error) {
     console.error(error);
   }
+}
+
+export async function joinCarpoolWithCodeAction(code: string, userId: string) {
+
+  const carpool: Carpool | null = await prisma.carpool.findUnique({
+    where: { invitationCode: code },
+  });
+  
+  if (!carpool) {
+    return { error: "Carpool not found" };
+  }
+
+  if (carpool.invitationCode !== code) {
+    return { error: "Invalid code" };
+  }
+
+  await prisma.carpoolParticipants.create({
+    data: {
+      userId: userId,
+      carpoolId: carpool.id,
+    },
+  });
+
+  return carpool;
 }
 
 export async function joinCarpoolAsSoberAction(carpoolId: number) {}
