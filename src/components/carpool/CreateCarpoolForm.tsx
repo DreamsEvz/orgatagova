@@ -68,8 +68,8 @@ const CreateCarForm = () => {
     
     const result = await response.json();
     if (result.success) {
-      //form.reset();
-      //router.push(`/carpool/cm3h9bw7o00002oc0ddtznkua/${result.carpoolId}`);
+      form.reset();
+      router.push(`/carpool/${result.userId}/${result.carpoolId}`);
     }
   };
 
