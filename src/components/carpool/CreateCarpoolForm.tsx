@@ -74,11 +74,11 @@ const CreateCarForm = () => {
   };
 
   return (
-    <Card className="bg-gray-800/60 p-8 rounded-lg shadow-lg">
-      <Form {...form}>
-        <form className="flex flex-col gap-6" onSubmit={form.handleSubmit(onSubmit)}>
-          <div className="flex gap-12">
-            <div className="flex flex-col w-full">
+      <Card className="bg-gray-800/60 border-gray-700 shadow-xl p-4 sm:p-6 md:p-8 w-full max-w-2xl mx-auto">
+        <Form {...form}>
+          <form className="flex flex-col gap-6" onSubmit={form.handleSubmit(onSubmit)}>
+            {/* All fields stacked vertically for mobile ergonomics */}
+            <div className="flex flex-col gap-6 md:grid md:grid-cols-2">
               <FormField
                 control={form.control}
                 name="departure"
@@ -89,7 +89,7 @@ const CreateCarForm = () => {
                       <Input
                         placeholder="Lyon"
                         {...field}
-                        className="bg-gray-700 text-white placeholder-gray-400 rounded-md border border-gray-600 focus:ring-teal-500 focus:border-teal-500"
+                        className="bg-gray-700 text-white placeholder-gray-400 rounded-md border border-gray-600 focus:ring-teal-500 focus:border-teal-500 w-full text-base py-3"
                       />
                     </FormControl>
                     <FormMessage className="text-red-500 text-sm mt-1" />
@@ -106,7 +106,7 @@ const CreateCarForm = () => {
                       <Input
                         placeholder="Paris"
                         {...field}
-                        className="bg-gray-700 text-white placeholder-gray-400 rounded-md border border-gray-600 focus:ring-teal-500 focus:border-teal-500"
+                        className="bg-gray-700 text-white placeholder-gray-400 rounded-md border border-gray-600 focus:ring-teal-500 focus:border-teal-500 w-full text-base py-3"
                       />
                     </FormControl>
                     <FormDescription className="text-gray-400 mt-1">Optionnel</FormDescription>
@@ -124,16 +124,13 @@ const CreateCarForm = () => {
                       <Textarea
                         placeholder="Description"
                         {...field}
-                        className="bg-gray-700 text-white placeholder-gray-400 rounded-md border border-gray-600 focus:ring-teal-500 focus:border-teal-500 resize-none"
+                        className="bg-gray-700 text-white placeholder-gray-400 rounded-md border border-gray-600 focus:ring-teal-500 focus:border-teal-500 resize-none w-full text-base py-3"
                       />
                     </FormControl>
                     <FormMessage className="text-red-500 text-sm mt-1" />
                   </FormItem>
                 )}
               />
-            </div>
-
-            <div className="flex flex-col w-full">
               <FormField
                 control={form.control}
                 name="departureDate"
@@ -144,7 +141,7 @@ const CreateCarForm = () => {
                       <Input
                         type="date"
                         {...field}
-                        className="bg-gray-700 text-white rounded-md border border-gray-600 focus:ring-teal-500 focus:border-teal-500"
+                        className="bg-gray-700 text-white rounded-md border border-gray-600 focus:ring-teal-500 focus:border-teal-500 w-full text-base py-3"
                       />
                     </FormControl>
                     <FormMessage className="text-red-500 text-sm mt-1" />
@@ -161,7 +158,7 @@ const CreateCarForm = () => {
                       <Input
                         type="time"
                         {...field}
-                        className="bg-gray-700 text-white rounded-md border border-gray-600 focus:ring-teal-500 focus:border-teal-500"
+                        className="bg-gray-700 text-white rounded-md border border-gray-600 focus:ring-teal-500 focus:border-teal-500 w-full text-base py-3"
                       />
                     </FormControl>
                     <FormMessage className="text-red-500 text-sm mt-1" />
@@ -180,61 +177,59 @@ const CreateCarForm = () => {
                         min={1}
                         max={10}
                         {...field}
-                        className="bg-gray-700 text-white rounded-md border border-gray-600 focus:ring-teal-500 focus:border-teal-500"
+                        className="bg-gray-700 text-white rounded-md border border-gray-600 focus:ring-teal-500 focus:border-teal-500 w-full text-base py-3"
                       />
                     </FormControl>
                     <FormMessage className="text-red-500 text-sm mt-1" />
                   </FormItem>
                 )}
               />
-              <div className="flex flex-col gap-4 mt-4">
-    <FormField
-      control={form.control}
-      name="isDriverSoberNeeded"
-      render={({ field }) => (
-        <FormItem className="flex items-center justify-between space-y-0">
-          <FormLabel className="text-teal-400">Besoin d'un conducteur sobre ?</FormLabel>
-          <FormControl>
-            <Switch 
-              checked={field.value} 
-              onCheckedChange={field.onChange}
-              className="data-[state=checked]:bg-teal-500"
-            />
-          </FormControl>
-        </FormItem>
-      )}
-    />
-
-    <FormField
-      control={form.control}
-      name="isPrivate"
-      render={({ field }) => (
-        <FormItem className="flex items-center justify-between space-y-0">
-          <FormLabel className="text-teal-400">Covoiturage privé ?</FormLabel>
-          <FormControl>
-            <Switch 
-              checked={field.value} 
-              onCheckedChange={field.onChange}
-              className="data-[state=checked]:bg-teal-500"
-            />
-          </FormControl>
-        </FormItem>
-      )}
-    />
-  </div>
+              <div className="flex flex-col gap-4 mt-2">
+                <FormField
+                  control={form.control}
+                  name="isDriverSoberNeeded"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center justify-between space-y-0 py-2">
+                      <FormLabel className="text-teal-400 text-base">Besoin d'un conducteur sobre ?</FormLabel>
+                      <FormControl>
+                        <Switch 
+                          checked={field.value} 
+                          onCheckedChange={field.onChange}
+                          className="data-[state=checked]:bg-teal-500 scale-125"
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="isPrivate"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center justify-between space-y-0 py-2">
+                      <FormLabel className="text-teal-400 text-base">Covoiturage privé ?</FormLabel>
+                      <FormControl>
+                        <Switch 
+                          checked={field.value} 
+                          onCheckedChange={field.onChange}
+                          className="data-[state=checked]:bg-teal-500 scale-125"
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
-          </div>
-          <div className="flex mx-auto mt-6">
-            <Button
-              type="submit"
-              className="bg-teal-500 hover:bg-teal-600 text-lg text-white px-6 py-3 rounded-lg transition-colors duration-150"
-            >
-              Créer un covoiturage
-            </Button>
-          </div>
-        </form>
-      </Form>
-    </Card>
+            <div className="flex mt-6">
+              <Button
+                type="submit"
+                className="bg-teal-500 hover:bg-teal-600 text-lg text-white w-full py-4 rounded-lg transition-colors duration-150"
+              >
+                Créer un covoiturage
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </Card>
   );
 };
 
