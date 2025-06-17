@@ -6,8 +6,8 @@ import { Button } from "@/src/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/src/components/ui/card";
 import { Carpool, User } from "@prisma/client";
 import { use, useEffect, useState } from "react";
-import { FaCar, FaCrown } from "react-icons/fa";
-import { CarpoolStatus, findUniqueCarpool, finishCarpoolAction, getCarpoolParticipants, getCarpoolStatus } from "../../carpool.action";
+import { FaCar, FaCrown, FaTrash } from "react-icons/fa";
+import { CarpoolStatus, deleteParticipantAction, findUniqueCarpool, finishCarpoolAction, getCarpoolParticipants, getCarpoolStatus } from "../../carpool.action";
 
 export default function Page({ params }: {  params: Promise<{ userId: string; carpoolId: string }>}) {
   const [carpool, setCarpool] = useState<Carpool | null>(null);
@@ -43,8 +43,13 @@ export default function Page({ params }: {  params: Promise<{ userId: string; ca
     return participantId === carpool?.creatorId;
   }
 
+  const removeParticipant = (participantId: string) => {
+    setParticipants(participants?.filter((participant) => participant.id !== participantId) || []);
+    deleteParticipantAction(parseInt(carpoolId), participantId);
+  }
+
   return (
-    <main className="flex min-h-screen items-center justify-center p-4 gap-6">
+    <main className="flex min-h-100 flex-col items-center justify-center p-4 gap-6">
       <Card className="w-full max-w-md transition-transform duration-200 bg-gray-800/60 border-gray-700 shadow-xl">
         <CardHeader className="space-y-2">
           <CardTitle className="flex justify-between text-2xl text-teal-400 flex items-center gap-2">
@@ -119,7 +124,20 @@ export default function Page({ params }: {  params: Promise<{ userId: string; ca
               {isUserCarpoolOwner(participant.id) && (
                 <FaCrown className="text-yellow-400" />
               )}
-              <p key={participant.id} className="text-gray-300">{participant.name}</p>
+              <div className="flex justify-between w-full">
+                <p className="text-gray-300">{participant.name}</p>
+                {
+                  !isUserCarpoolOwner(participant.id) && (
+                    <ConfirmAlertDialog
+                      title="Supprimer le participant"
+                      description="Voulez-vous vraiment supprimer le participant ?"
+                      onConfirm={() => removeParticipant(participant.id)}
+                    >
+                      <FaTrash className="text-red-400" />
+                    </ConfirmAlertDialog>
+                ) 
+                }
+              </div>
             </div>
           ))}
         </CardContent>

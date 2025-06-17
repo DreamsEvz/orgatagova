@@ -120,3 +120,8 @@ export async function getCarpoolParticipants(carpoolId: number) {
   return participantsWithUser;
 }
 
+export async function deleteParticipantAction(carpoolId: number, participantId: string) {
+  await prisma.carpoolParticipants.delete({
+    where: { userId_carpoolId: { userId: participantId, carpoolId: carpoolId } },
+  });
+}
