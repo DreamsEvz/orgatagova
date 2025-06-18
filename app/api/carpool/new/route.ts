@@ -10,5 +10,5 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false });
   }
 
-  return NextResponse.json({ success: true, userId: carpool.creatorId, carpoolId: carpool.id });
+  return NextResponse.json({ success: true, userId: carpool.data?.creatorId, carpoolId: carpool.data?.id });
 }

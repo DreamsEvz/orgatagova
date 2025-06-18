@@ -5,7 +5,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     <>
       <CarpoolHeader />
       <main className="sm:ml-64 min-h-screen">
-        {children}
+          {children}
       </main>
     </>
   )

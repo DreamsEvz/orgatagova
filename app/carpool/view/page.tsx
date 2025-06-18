@@ -12,6 +12,6 @@ export default async function Page() {
     <CarpoolJoinWithCode>
       <Button className="mb-10"><FaPlus /> Rejoindre un covoiturage avec code</Button>
     </CarpoolJoinWithCode>
-    <CarpoolList carpools={carpools} />
+      <CarpoolList carpools={carpools} />
   </main>
 }

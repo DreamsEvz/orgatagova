@@ -6,27 +6,28 @@ import { Button } from "@/src/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/src/components/ui/card";
 import { Carpool, User } from "@prisma/client";
 import { use, useEffect, useState } from "react";
-import { FaCar, FaCheck, FaCopy, FaCrown, FaTrash } from "react-icons/fa";
-import { CarpoolStatus, deleteParticipantAction, findUniqueCarpool, finishCarpoolAction, getCarpoolParticipants, getCarpoolStatus } from "../../carpool.action";
+import { FaCar, FaCheck, FaCopy, FaCrown, FaTrash, FaUserShield } from "react-icons/fa";
+import { CarpoolStatus, deleteParticipantAction, findUniqueCarpool, finishCarpoolAction, getCarpoolParticipants, getCarpoolSoberDriver, getCarpoolStatus } from "../../carpool.action";
 
 export default function Page({ params }: {  params: Promise<{ userId: string; carpoolId: string }>}) {
   const [carpool, setCarpool] = useState<Carpool | null>(null);
   const [status, setStatus] = useState<CarpoolStatus | null>(null);
   const [participants, setParticipants] = useState<User[] | null>(null);
+  const [soberDriver, setSoberDriver] = useState<string | null>(null);
   const [isCopied, setIsCopied] = useState(false);
   const {carpoolId} = use(params);
 
   useEffect(() => {
-    findUniqueCarpool(parseInt(carpoolId))
+    findUniqueCarpool(carpoolId)
       .then(data => setCarpool(data))
       .catch(error => console.error('Error fetching carpool:', error));
-    getCarpoolStatus(parseInt(carpoolId))
+    getCarpoolStatus(carpoolId)
       .then(data => {
         setStatus(data ? data : null);
         console.log(data);
       })
       .catch(error => console.error('Error fetching carpool status:', error));
-    getCarpoolParticipants(parseInt(carpoolId))
+    getCarpoolParticipants(carpoolId)
       .then(data => {
         setParticipants(data ? data : null);
       })
@@ -46,7 +47,7 @@ export default function Page({ params }: {  params: Promise<{ userId: string; ca
 
   const removeParticipant = (participantId: string) => {
     setParticipants(participants?.filter((participant) => participant.id !== participantId) || []);
-    deleteParticipantAction(parseInt(carpoolId), participantId);
+    deleteParticipantAction(carpoolId, participantId);
   }
 
   const copyCode = () => {
@@ -55,6 +56,12 @@ export default function Page({ params }: {  params: Promise<{ userId: string; ca
     setTimeout(() => {
       setIsCopied(false);
     }, 2000);
+  }
+
+  const isUserCarpoolSoberDriver = async (participantId: string) => {
+    const soberDriverId = await getCarpoolSoberDriver(carpoolId);
+    setSoberDriver(soberDriverId);
+    return soberDriverId === participantId;
   }
 
   return (
@@ -112,7 +119,7 @@ export default function Page({ params }: {  params: Promise<{ userId: string; ca
             title="Terminer le trajet"
             description="Voulez-vous vraiment terminer le trajet ?"
             onConfirm={() => {
-              finishCarpoolAction(parseInt(carpoolId));
+              finishCarpoolAction(carpoolId);
               setStatus("finished");
             }}
           >
@@ -132,6 +139,9 @@ export default function Page({ params }: {  params: Promise<{ userId: string; ca
             <div key={participant.id} className="flex items-center gap-2">
               {isUserCarpoolOwner(participant.id) && (
                 <FaCrown className="text-yellow-400" />
+              )}
+              {soberDriver === participant.id && (
+                <FaUserShield className="text-green-400" />
               )}
               <div className="flex justify-between w-full">
                 <p className="text-gray-300">{participant.name}</p>

@@ -6,6 +6,7 @@ import { Button } from "../ui/button";
 import { Card } from "../ui/card";
 
 export function CarpoolViewList({ carpools }: { carpools: Carpool[] }) {
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 p-4 max-w-7xl mx-auto max-h-[80vh] overflow-y-auto">
       {carpools.map((carpool) => (
