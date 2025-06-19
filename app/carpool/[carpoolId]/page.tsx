@@ -8,6 +8,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/src/comp
 import { Carpool, User } from "@prisma/client";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { use, useEffect, useState } from "react";
 import { FaCar, FaCheck, FaCopy, FaCrown, FaTrash, FaUserMinus, FaUserShield } from "react-icons/fa";
 
@@ -19,6 +20,7 @@ export default function Page({ params }: {  params: Promise<{ carpoolId: string 
   const [soberDriver, setSoberDriver] = useState<string | null>(null);
   const [isCopied, setIsCopied] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(session?.user as User);
+  const router = useRouter();
   const {carpoolId} = use(params);
 
   useEffect(() => {
@@ -88,6 +90,7 @@ export default function Page({ params }: {  params: Promise<{ carpoolId: string 
     
     if (result.success) {
       setParticipants(participants?.filter((participant) => participant.id !== participantId) || []);
+      router.push(`/carpool`);
     } else {
       // Optionnel : afficher un message d'erreur à l'utilisateur
       console.error("Erreur lors de la suppression:", result.error);
@@ -180,6 +183,7 @@ export default function Page({ params }: {  params: Promise<{ carpoolId: string 
                 <FaUserShield className="text-green-400" title="Conducteur sobre" />
               )}
               <div className="flex justify-between w-full">
+              <Link href={`/profile/${participant.id}`} className="text-gray-300 hover:text-white">
                 <Badge className={`p-2 ${
                   isUserCarpoolOwner(participant.id) 
                     ? "bg-yellow-600 text-white" 
@@ -188,10 +192,11 @@ export default function Page({ params }: {  params: Promise<{ carpoolId: string 
                   {isUserCarpoolOwner(participant.id) && (
                     <FaCrown className="text-yellow-300 inline-block mr-2" title="Créateur" />
                   )}
-                  <Link href={`/profile/${participant.id}`} className="text-gray-300 hover:text-white">
+                  
                     {participant.name}
-                  </Link>
-                </Badge>
+                  </Badge>
+                </Link>
+
 
                 <div className="flex items-center gap-2">
                   {/* Indication pour le créateur qu'il ne peut pas se retirer */}
