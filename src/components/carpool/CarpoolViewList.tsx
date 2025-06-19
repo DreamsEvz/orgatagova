@@ -1,11 +1,13 @@
 'use client';
 
+import { CarpoolWithCreator } from "@/app/carpool/carpool.action";
 import { Carpool } from "@prisma/client";
+import Image from "next/image";
 import Link from "next/link";
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";
 
-export function CarpoolViewList({ carpools }: { carpools: Carpool[] }) {
+export function CarpoolViewList({ carpools }: { carpools: Carpool[] | CarpoolWithCreator[] }) {
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 p-4 max-w-7xl mx-auto max-h-[80vh] overflow-y-auto">
@@ -16,10 +18,14 @@ export function CarpoolViewList({ carpools }: { carpools: Carpool[] }) {
   );
 }
 
-export function CarpoolViewListCard({ carpool }: { carpool: Carpool }) {
+export function CarpoolViewListCard({ carpool }: { carpool: Carpool | CarpoolWithCreator }) {
   return (
     <Card className="w-full h-full transition-transform duration-200 bg-gray-800/60 border-gray-700 shadow-xl p-4">
       <div className="flex flex-col h-full">
+        <div className="flex flex-row items-center gap-2 mb-4">
+            <Image src={'creator' in carpool ? carpool.creator?.image || "" : ""} alt={'creator' in carpool ? carpool.creator?.name || "" : ""} width={40} height={40} className="rounded-full" />
+            <p className="text-gray-300 break-words">{'creator' in carpool ? carpool.creator?.name : 'Utilisateur'}</p>
+          </div>
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div className="space-y-2">
             <span className="text-teal-400 font-medium block">Départ</span>

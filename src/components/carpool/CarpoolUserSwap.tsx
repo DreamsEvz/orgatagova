@@ -1,11 +1,12 @@
 "use client";
 
+import { CarpoolWithCreator } from "@/app/carpool/carpool.action";
 import { Carpool } from "@prisma/client";
 import { useState } from "react";
 import { Button } from "../ui/button";
 import { CarpoolViewList } from "./CarpoolViewList";
 
-export default function CarpoolUserSwap({ ownedCarpools, joinedCarpools }: { ownedCarpools: Carpool[], joinedCarpools: Carpool[] }) {
+export default function CarpoolUserSwap({ ownedCarpools, joinedCarpools }: { ownedCarpools: Carpool[], joinedCarpools: CarpoolWithCreator[] }) {
 
   const [isMyCarpools, setIsMyCarpools] = useState(true);
 

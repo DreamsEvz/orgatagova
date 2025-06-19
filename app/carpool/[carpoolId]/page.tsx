@@ -6,15 +6,19 @@ import { Badge } from "@/src/components/ui/badge";
 import { Button } from "@/src/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/src/components/ui/card";
 import { Carpool, User } from "@prisma/client";
+import { useSession } from "next-auth/react";
+import Link from "next/link";
 import { use, useEffect, useState } from "react";
-import { FaCar, FaCheck, FaCopy, FaCrown, FaTrash, FaUserShield } from "react-icons/fa";
+import { FaCar, FaCheck, FaCopy, FaCrown, FaTrash, FaUserMinus, FaUserShield } from "react-icons/fa";
 
 export default function Page({ params }: {  params: Promise<{ carpoolId: string }>}) {
+  const {data: session} = useSession();
   const [carpool, setCarpool] = useState<Carpool | null>(null);
   const [status, setStatus] = useState<CarpoolStatus | null>(null);
   const [participants, setParticipants] = useState<User[] | null>(null);
   const [soberDriver, setSoberDriver] = useState<string | null>(null);
   const [isCopied, setIsCopied] = useState(false);
+  const [currentUser, setCurrentUser] = useState<User | null>(session?.user as User);
   const {carpoolId} = use(params);
 
   useEffect(() => {
@@ -32,6 +36,11 @@ export default function Page({ params }: {  params: Promise<{ carpoolId: string 
         setParticipants(data ? data : null);
       })
       .catch(error => console.error('Error fetching carpool participants:', error));
+    getCarpoolSoberDriver(carpoolId)
+      .then(data => {
+        setSoberDriver(data ? data : null);
+      })
+      .catch(error => console.error('Error fetching carpool sober driver:', error));
   }, []);
 
   const getStatusColorAndText = (status: CarpoolStatus) => {
@@ -45,9 +54,45 @@ export default function Page({ params }: {  params: Promise<{ carpoolId: string 
     return participantId === carpool?.creatorId;
   }
 
-  const removeParticipant = (participantId: string) => {
-    setParticipants(participants?.filter((participant) => participant.id !== participantId) || []);
-    deleteParticipantAction(carpoolId, participantId);
+  const isCurrentUser = (participantId: string) => {
+    return participantId === currentUser?.id;
+  }
+
+  const canRemoveParticipant = (participantId: string) => {
+    const isCreator = currentUser?.id === carpool?.creatorId;
+    const isParticipantCreator = participantId === carpool?.creatorId;
+    const isCurrentUserParticipant = currentUser?.id === participantId;
+
+    // Le créateur ne peut pas se retirer lui-même
+    if (isParticipantCreator && isCurrentUserParticipant) {
+      return false;
+    }
+
+    // Le créateur peut retirer tout le monde (sauf lui-même)
+    if (isCreator && !isParticipantCreator) {
+      return true;
+    }
+
+    // Les participants ne peuvent se retirer qu'eux-mêmes
+    if (isCurrentUserParticipant && !isParticipantCreator) {
+      return true;
+    }
+
+    return false;
+  }
+
+  const removeParticipant = async (participantId: string) => {
+    if (!currentUser?.id) return;
+    
+    const result = await deleteParticipantAction(carpoolId, participantId, currentUser.id);
+    
+    if (result.success) {
+      setParticipants(participants?.filter((participant) => participant.id !== participantId) || []);
+    } else {
+      // Optionnel : afficher un message d'erreur à l'utilisateur
+      console.error("Erreur lors de la suppression:", result.error);
+      alert(result.error);
+    }
   }
 
   const copyCode = () => {
@@ -56,12 +101,6 @@ export default function Page({ params }: {  params: Promise<{ carpoolId: string 
     setTimeout(() => {
       setIsCopied(false);
     }, 2000);
-  }
-
-  const isUserCarpoolSoberDriver = async (participantId: string) => {
-    const soberDriverId = await getCarpoolSoberDriver(carpoolId);
-    setSoberDriver(soberDriverId);
-    return soberDriverId === participantId;
   }
 
   return (
@@ -136,26 +175,51 @@ export default function Page({ params }: {  params: Promise<{ carpoolId: string 
         </CardHeader>
         <CardContent>
           {participants?.map((participant) => (
-            <div key={participant.id} className="flex items-center gap-2">
-              {isUserCarpoolOwner(participant.id) && (
-                <FaCrown className="text-yellow-400" />
-              )}
+            <div key={participant.id} className="flex items-center gap-2 mb-2">
               {soberDriver === participant.id && (
-                <FaUserShield className="text-green-400" />
+                <FaUserShield className="text-green-400" title="Conducteur sobre" />
               )}
               <div className="flex justify-between w-full">
-                <p className="text-gray-300">{participant.name}</p>
-                {
-                  !isUserCarpoolOwner(participant.id) && (
+                <Badge className={`p-2 ${
+                  isUserCarpoolOwner(participant.id) 
+                    ? "bg-yellow-600 text-white" 
+                    : "bg-gray-700 text-gray-300"
+                }`}>
+                  {isUserCarpoolOwner(participant.id) && (
+                    <FaCrown className="text-yellow-300 inline-block mr-2" title="Créateur" />
+                  )}
+                  <Link href={`/profile/${participant.id}`} className="text-gray-300 hover:text-white">
+                    {participant.name}
+                  </Link>
+                </Badge>
+
+                <div className="flex items-center gap-2">
+                  {/* Indication pour le créateur qu'il ne peut pas se retirer */}
+                  {isUserCarpoolOwner(participant.id) && isCurrentUser(participant.id) && (
+                    <span className="text-xs text-gray-500 italic" title="Le créateur ne peut pas se retirer">
+                      Créateur
+                    </span>
+                  )}
+                  
+                  {/* Bouton de suppression/retrait */}
+                  {canRemoveParticipant(participant.id) && (
                     <ConfirmAlertDialog
-                      title="Supprimer le participant"
-                      description="Voulez-vous vraiment supprimer le participant ?"
+                      title={isCurrentUser(participant.id) ? "Se retirer du covoiturage" : "Supprimer le participant"}
+                      description={
+                        isCurrentUser(participant.id) 
+                          ? "Voulez-vous vraiment vous retirer de ce covoiturage ?" 
+                          : "Voulez-vous vraiment supprimer ce participant ?"
+                      }
                       onConfirm={() => removeParticipant(participant.id)}
                     >
-                      <FaTrash className="text-red-400" />
+                      {isCurrentUser(participant.id) ? (
+                        <FaUserMinus className="text-orange-400 cursor-pointer hover:text-orange-300" title="Se retirer" />
+                      ) : (
+                        <FaTrash className="text-red-400 cursor-pointer hover:text-red-300" title="Supprimer le participant" />
+                      )}
                     </ConfirmAlertDialog>
-                ) 
-                }
+                  )}
+                </div>
               </div>
             </div>
           ))}

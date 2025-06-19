@@ -100,7 +100,13 @@ export async function createCarpoolAction(data: CreateCarpoolData): Promise<Carp
 export type CarpoolWithCreator = Carpool & { creator: User };
 
 export async function getCarpoolsAndParticipants(): Promise<CarpoolWithCreator[]> {
-  const carpools = await prisma.carpool.findMany();
+  const carpools = await prisma.carpool.findMany({
+    where: {
+      isFinished: false,
+      isArchived: false,
+      availableSeats: { gt: 0 },
+    },
+  });
 
   const carpoolOwners = await prisma.user.findMany({
     where: {
@@ -116,7 +122,7 @@ export async function getCarpoolsAndParticipants(): Promise<CarpoolWithCreator[]
   }));
 }
 
-export async function getCarpoolsWhereUserBelongs(userId: string): Promise<Carpool[]> {
+export async function getCarpoolsWhereUserBelongs(userId: string): Promise<CarpoolWithCreator[]> {
   const carpools = await prisma.carpool.findMany({
     where: {
       participants: { some: { userId } },
@@ -125,7 +131,18 @@ export async function getCarpoolsWhereUserBelongs(userId: string): Promise<Carpo
     },
   });
 
-  return carpools;
+  const carpoolOwners = await prisma.user.findMany({
+    where: {
+      id: {
+        in: carpools.map(carpool => carpool.creatorId),
+      },
+    },
+  });
+
+  return carpools.map(carpool => ({
+    ...carpool,
+    creator: carpoolOwners.find(owner => owner.id === carpool.creatorId)!,
+  }));
 }
 
 // Carpool joining
@@ -150,7 +167,6 @@ export async function joinCarpoolAction(carpoolId: string, userId: string): Prom
       include: { participants: true },
     });
 
-    console.log(carpool);
 
     if (!carpool) {
       return { success: false, error: "Carpool not found" };
@@ -164,15 +180,20 @@ export async function joinCarpoolAction(carpoolId: string, userId: string): Prom
       where: { carpoolId }
     });
 
-    console.log(participantCount);
-
     if (participantCount >= carpool.availableSeats) {
       return { success: false, error: "Carpool is full" };
     }
 
+    
     await prisma.carpoolParticipants.create({
       data: { userId, carpoolId },
     });
+    await prisma.carpool.update({
+      where: { id: carpoolId },
+      data: { availableSeats: carpool.availableSeats - 1 },
+    });
+
+ 
 
     return { success: true };
   } catch (error) {
@@ -274,6 +295,8 @@ export async function joinCarpoolAsSoberAction(carpoolId: string, userId: string
       });
 
       return updatedCarpool;
+    }, {
+      timeout: 10000 // 10 seconds timeout
     });
 
     return { success: true, data: result };
@@ -314,9 +337,9 @@ export async function finishCarpoolAction(carpoolId: string): Promise<CarpoolAct
   }
 }
 
-export async function deleteParticipantAction(carpoolId: string, participantId: string): Promise<CarpoolActionResult> {
-  if (!carpoolId || !participantId) {
-    return { success: false, error: "Invalid carpool ID or participant ID" };
+export async function deleteParticipantAction(carpoolId: string, participantId: string, currentUserId: string): Promise<CarpoolActionResult> {
+  if (!carpoolId || !participantId || !currentUserId) {
+    return { success: false, error: "Invalid carpool ID, participant ID, or current user ID" };
   }
 
   try {
@@ -328,16 +351,57 @@ export async function deleteParticipantAction(carpoolId: string, participantId: 
       return { success: false, error: "Carpool not found" };
     }
 
-    // Prevent removing the creator
-    if (carpool.creatorId === participantId) {
-      return { success: false, error: "Cannot remove the carpool creator" };
-    }
-
-    await prisma.carpoolParticipants.delete({
+    // Check if the participant exists
+    const participant = await prisma.carpoolParticipants.findUnique({
       where: { userId_carpoolId: { userId: participantId, carpoolId } },
     });
 
-    return { success: true };
+    if (!participant) {
+      return { success: false, error: "Participant not found" };
+    }
+
+    const isCreator = carpool.creatorId === currentUserId;
+    const isParticipantCreator = carpool.creatorId === participantId;
+    const isCurrentUserParticipant = currentUserId === participantId;
+
+    // Rule 1: Le créateur ne peut pas se retirer lui-même
+    if (isParticipantCreator && isCurrentUserParticipant) {
+      return { success: false, error: "Le créateur ne peut pas se retirer lui-même" };
+    }
+
+    // Rule 2: Le créateur peut retirer tout le monde (sauf lui-même)
+    if (isCreator && !isParticipantCreator) {
+      // Creator can remove anyone except themselves
+      await prisma.carpoolParticipants.delete({
+        where: { userId_carpoolId: { userId: participantId, carpoolId } },
+      });
+
+      await prisma.carpool.update({
+        where: { id: carpoolId },
+        data: { availableSeats: carpool.availableSeats + 1 },
+      });
+
+      return { success: true };
+    }
+
+    // Rule 3: Les participants ne peuvent se retirer qu'eux-mêmes
+    if (isCurrentUserParticipant && !isParticipantCreator) {
+      // Participant can only remove themselves
+      await prisma.carpoolParticipants.delete({
+        where: { userId_carpoolId: { userId: participantId, carpoolId } },
+      });
+
+      await prisma.carpool.update({
+        where: { id: carpoolId },
+        data: { availableSeats: carpool.availableSeats + 1 },
+      });
+
+      return { success: true };
+    }
+
+    // If none of the above conditions are met, the action is not authorized
+    return { success: false, error: "Vous n'êtes pas autorisé à effectuer cette action" };
+
   } catch (error) {
     console.error("Error deleting participant:", error);
     return { success: false, error: "Failed to remove participant" };
@@ -371,7 +435,7 @@ export async function getUserUnFinishedCarpools(): Promise<Carpool[]> {
     return await prisma.carpool.findMany({
       where: { 
         isFinished: false, 
-        participants: { some: { userId: currentUserId } } 
+        creatorId: currentUserId,
       },
       orderBy: { departureDate: 'asc' },
     });
