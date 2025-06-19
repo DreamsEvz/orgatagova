@@ -165,9 +165,11 @@ export default function Page({ params }: {  params: Promise<{ carpoolId: string 
               setStatus("finished");
             }}
           >
-            <Button className="bg-teal-400 hover:bg-teal-500">
-              Terminer le trajet
-            </Button>
+            {status === "ongoing" && (
+              <Button className="bg-red-400 hover:bg-red-500">
+                Terminer le trajet
+              </Button>
+            )}
           </ConfirmAlertDialog>
         </CardFooter>
       </Card>

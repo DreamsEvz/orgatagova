@@ -306,6 +306,35 @@ export async function joinCarpoolAsSoberAction(carpoolId: string, userId: string
   }
 }
 
+export async function getFinishedCarpools(): Promise<CarpoolWithCreator[]> {
+  const currentUserId = await getCurrentUserId();
+  if (!currentUserId) {
+    return [];
+  }
+
+  const participants = await prisma.carpoolParticipants.findMany({
+    where: { userId: currentUserId, carpool: { isFinished: true, isArchived: false } },
+    include: { carpool: true },
+  });
+
+  const carpoolOwners = await prisma.user.findMany({
+    where: {
+      id: {
+        in: participants.map(participant => participant.carpool.creatorId),
+      },
+    },
+  });
+
+  const carpools = await prisma.carpool.findMany({
+    where: { id: { in: participants.map(participant => participant.carpoolId) } },
+  });
+
+  return carpools.map(carpool => ({
+    ...carpool,
+    creator: carpoolOwners.find(owner => owner.id === carpool.creatorId)!,
+  }));
+}
+
 // Carpool management
 export async function finishCarpoolAction(carpoolId: string): Promise<CarpoolActionResult> {
   if (!carpoolId) {

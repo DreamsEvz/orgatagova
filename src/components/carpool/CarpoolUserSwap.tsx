@@ -6,20 +6,25 @@ import { useState } from "react";
 import { Button } from "../ui/button";
 import { CarpoolViewList } from "./CarpoolViewList";
 
-export default function CarpoolUserSwap({ ownedCarpools, joinedCarpools }: { ownedCarpools: Carpool[], joinedCarpools: CarpoolWithCreator[] }) {
+type CarpoolUserSwapProps = 'owned' | 'ongoing' | 'finished';
 
-  const [isMyCarpools, setIsMyCarpools] = useState(true);
+export default function CarpoolUserSwap({ ownedCarpools, joinedCarpools, finishedCarpools }: { ownedCarpools: Carpool[], joinedCarpools: CarpoolWithCreator[], finishedCarpools: Carpool[] }) {
+
+  const [isMyCarpools, setIsMyCarpools] = useState<CarpoolUserSwapProps>('ongoing');
 
   return (<>
     <div className="flex flex-row gap-2 mb-10 bg-gray-800/60 border-gray-700 shadow-xl p-6 rounded-lg">
-      <Button className="w-full" onClick={() => setIsMyCarpools(true)} variant={isMyCarpools ? "default" : "outline"}>
+    <Button className="w-full" onClick={() => setIsMyCarpools('ongoing')} variant={isMyCarpools === 'ongoing' ? "default" : "outline"}>
+        <span>Les covoiturages en cours</span>
+      </Button>
+      <Button className="w-full" onClick={() => setIsMyCarpools('owned')} variant={isMyCarpools === 'owned' ? "default" : "outline"}>
         <span>Mes covoiturages</span>
       </Button> 
-      <Button className="w-full" onClick={() => setIsMyCarpools(false)} variant={isMyCarpools ? "outline" : "default"}>
-        <span>Les covoiturages rejoints</span>
+      <Button className="w-full" onClick={() => setIsMyCarpools('finished')} variant={isMyCarpools === 'finished' ? "default" : "outline"}>
+        <span>Les covoiturages terminés</span>
       </Button>
     </div>
-    {isMyCarpools ? <CarpoolViewList carpools={ownedCarpools} /> : <CarpoolViewList carpools={joinedCarpools} />}  
+    {isMyCarpools === 'owned' ? <CarpoolViewList carpools={ownedCarpools} /> : isMyCarpools === 'ongoing' ? <CarpoolViewList carpools={joinedCarpools} /> : <CarpoolViewList carpools={finishedCarpools} />}  
     </>
   );
 }

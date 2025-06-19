@@ -23,7 +23,13 @@ export function CarpoolViewListCard({ carpool }: { carpool: Carpool | CarpoolWit
     <Card className="w-full h-full transition-transform duration-200 bg-gray-800/60 border-gray-700 shadow-xl p-4">
       <div className="flex flex-col h-full">
         <div className="flex flex-row items-center gap-2 mb-4">
-            <Image src={'creator' in carpool ? carpool.creator?.image || "" : ""} alt={'creator' in carpool ? carpool.creator?.name || "" : ""} width={40} height={40} className="rounded-full" />
+            {'creator' in carpool && carpool.creator?.image ? (
+              <Image src={carpool.creator.image} alt={carpool.creator.name || ""} width={40} height={40} className="rounded-full" />
+            ) : (
+              <div className="w-10 h-10 bg-gray-600 rounded-full flex items-center justify-center">
+                <span className="text-gray-300 text-sm">?</span>
+              </div>
+            )}
             <p className="text-gray-300 break-words">{'creator' in carpool ? carpool.creator?.name : 'Utilisateur'}</p>
           </div>
         <div className="grid grid-cols-2 gap-4 mb-4">
