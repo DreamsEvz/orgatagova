@@ -97,6 +97,37 @@ export async function createCarpoolAction(data: CreateCarpoolData): Promise<Carp
   }
 }
 
+export type CarpoolWithCreator = Carpool & { creator: User };
+
+export async function getCarpoolsAndParticipants(): Promise<CarpoolWithCreator[]> {
+  const carpools = await prisma.carpool.findMany();
+
+  const carpoolOwners = await prisma.user.findMany({
+    where: {
+      id: {
+        in: carpools.map(carpool => carpool.creatorId),
+      },
+    },
+  });
+
+  return carpools.map(carpool => ({
+    ...carpool,
+    creator: carpoolOwners.find(owner => owner.id === carpool.creatorId)!,
+  }));
+}
+
+export async function getCarpoolsWhereUserBelongs(userId: string): Promise<Carpool[]> {
+  const carpools = await prisma.carpool.findMany({
+    where: {
+      participants: { some: { userId } },
+      isFinished: false,
+      isArchived: false,
+    },
+  });
+
+  return carpools;
+}
+
 // Carpool joining
 export async function joinCarpoolAction(carpoolId: string, userId: string): Promise<CarpoolActionResult> {
   if (!carpoolId || !userId) {
@@ -119,6 +150,8 @@ export async function joinCarpoolAction(carpoolId: string, userId: string): Prom
       include: { participants: true },
     });
 
+    console.log(carpool);
+
     if (!carpool) {
       return { success: false, error: "Carpool not found" };
     }
@@ -130,6 +163,8 @@ export async function joinCarpoolAction(carpoolId: string, userId: string): Prom
     const participantCount = await prisma.carpoolParticipants.count({
       where: { carpoolId }
     });
+
+    console.log(participantCount);
 
     if (participantCount >= carpool.availableSeats) {
       return { success: false, error: "Carpool is full" };

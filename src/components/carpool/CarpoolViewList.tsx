@@ -44,7 +44,7 @@ export function CarpoolViewListCard({ carpool }: { carpool: Carpool }) {
         </div>
         <div className="mt-auto">
           <Link 
-            href={`/carpool/${carpool.creatorId}/${carpool.id}`} 
+            href={`/carpool/${carpool.id}`} 
             className="w-full block"
           >
             <Button className="w-full bg-teal-500 hover:bg-teal-600 text-white font-bold transition-colors duration-200">

@@ -1,12 +1,14 @@
 "use client";
 
 import { joinCarpoolAction, joinCarpoolAsSoberAction } from "@/app/carpool/carpool.action";
-import { Carpool } from "@prisma/client";
+import { Carpool, User } from "@prisma/client";
 import { useSession } from "next-auth/react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";
-  
-export function CarpoolList({carpools }: { carpools: Carpool[] }) {
+
+export function CarpoolList({carpools }: { carpools: (Carpool & { creator: User })[] }) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 p-4 max-w-7xl mx-auto max-h-[80vh] overflow-y-auto pb-20">
       {carpools.map((carpool) => (
@@ -16,21 +18,24 @@ export function CarpoolList({carpools }: { carpools: Carpool[] }) {
   );
 }
 
-export function CarpoolListCard({ carpool }: { carpool: Carpool }) {
+export function CarpoolListCard({ carpool }: { carpool: Carpool & { creator: User } }) {
   const { data: session } = useSession();
   const currentUserId = session?.user?.id;
+  const router = useRouter();
 
-  const joinCarpool = async (carpoolId: number) => {
+  const joinCarpool = async (carpoolId: string) => {
     try {
       await joinCarpoolAction(carpoolId, currentUserId as string);
+      router.push(`/carpool/${carpoolId}`);
     } catch (error) {
       console.error("Error joining carpool:", error);
     }
   }
 
-  const joinCarpoolAsSober = async (carpoolId: number) => {
+  const joinCarpoolAsSober = async (carpoolId: string) => {
     try {
-      await joinCarpoolAsSoberAction(carpoolId);
+      await joinCarpoolAsSoberAction(carpoolId, currentUserId as string);
+      router.push(`/carpool/${carpoolId}`);
     } catch (error) {
       console.error("Error joining carpool as sober:", error);
     }
@@ -39,14 +44,16 @@ export function CarpoolListCard({ carpool }: { carpool: Carpool }) {
   return (
     <Card className="w-full h-full transition-transform duration-200 bg-gray-800/60 border-gray-700 shadow-xl p-4">
       <div className="flex flex-col h-full">
+        <div className="flex flex-row justify-between items-center mb-4">
+          <div className="flex flex-row items-center gap-2">
+            <Image src={carpool.creator?.image || ""} alt={carpool.creator?.name || ""} width={40} height={40} className="rounded-full" />
+            <p className="text-gray-300 break-words">{carpool.creator?.name}</p>
+          </div>
+        </div>
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div className="space-y-2">
-            <span className="text-teal-400 font-medium block">Départ</span>
-            <p className="text-gray-300 break-words">{carpool.departure}</p>
-          </div>
-          <div className="space-y-2">
-            <span className="text-teal-400 font-medium block">Arrivée</span>
-            <p className="text-gray-300 break-words">{carpool.arrival}</p>
+            <span className="text-teal-400 font-medium block">Trajet</span>
+            <p className="text-gray-300 break-words">{carpool.title}</p>
           </div>
           <div className="space-y-2">
             <span className="text-teal-400 font-medium block">Date de départ</span>

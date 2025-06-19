@@ -69,7 +69,7 @@ const CreateCarForm = () => {
     const result = await response.json();
     if (result.success) {
       form.reset();
-      router.push(`/carpool/${result.userId}/${result.carpoolId}`);
+      router.push(`/carpool/${result.carpoolId}`);
     }
   };
 
@@ -224,7 +224,7 @@ const CreateCarForm = () => {
                 type="submit"
                 className="bg-teal-500 hover:bg-teal-600 text-lg text-white w-full py-4 rounded-lg transition-colors duration-150"
               >
-                Créer un covoiturage
+                Créer le covoiturage
               </Button>
             </div>
           </form>

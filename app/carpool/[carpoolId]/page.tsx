@@ -1,5 +1,6 @@
 "use client";
 
+import { CarpoolStatus, deleteParticipantAction, findUniqueCarpool, finishCarpoolAction, getCarpoolParticipants, getCarpoolSoberDriver, getCarpoolStatus } from "@/app/carpool/carpool.action";
 import { ConfirmAlertDialog } from "@/src/components/shared/ConfirmAlertDialog";
 import { Badge } from "@/src/components/ui/badge";
 import { Button } from "@/src/components/ui/button";
@@ -7,9 +8,8 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/src/comp
 import { Carpool, User } from "@prisma/client";
 import { use, useEffect, useState } from "react";
 import { FaCar, FaCheck, FaCopy, FaCrown, FaTrash, FaUserShield } from "react-icons/fa";
-import { CarpoolStatus, deleteParticipantAction, findUniqueCarpool, finishCarpoolAction, getCarpoolParticipants, getCarpoolSoberDriver, getCarpoolStatus } from "../../carpool.action";
 
-export default function Page({ params }: {  params: Promise<{ userId: string; carpoolId: string }>}) {
+export default function Page({ params }: {  params: Promise<{ carpoolId: string }>}) {
   const [carpool, setCarpool] = useState<Carpool | null>(null);
   const [status, setStatus] = useState<CarpoolStatus | null>(null);
   const [participants, setParticipants] = useState<User[] | null>(null);

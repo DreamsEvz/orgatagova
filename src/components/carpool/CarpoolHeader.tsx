@@ -27,7 +27,7 @@ export default function CarpoolHeader() {
       desktopLabel: "Créer un covoiturage"
     },
     {
-      href: `/carpool/${userId}/list`,
+      href: `/carpool/list/${userId}`,
       icon: <FaList className="h-5 w-5" />,
       label: "Mes covoit",
       desktopLabel: "Mes covoiturages"
@@ -69,7 +69,7 @@ export default function CarpoolHeader() {
       {/* Floating Profile Button (top right) */}
       <div className="fixed top-4 right-4 md:top-10 md:right-10 z-50">
         <ProfileComponent session={session}>
-          <Button className="bg-white/10 hover:bg-teal-500/20 text-teal-400 hover:text-white border border-white/20 shadow-lg rounded-full w-16 h-16 items-center justify-center transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400/50" asChild>
+          <Button className="bg-gray-800 hover:bg-teal-500/20 text-teal-400 hover:text-white border border-white/20 shadow-lg rounded-full w-16 h-16 items-center justify-center transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400/50" asChild>
             <FaUserCircle className="w-10 h-10" />
           </Button>
         </ProfileComponent>
