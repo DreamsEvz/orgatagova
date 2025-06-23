@@ -18,6 +18,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Switch } from "../ui/switch";
+import { createCarpoolAction, CreateCarpoolData } from "@/app/carpool/actions";
 
 const formSchema = z.object({
   departure: z.string().min(1, { message: "Le champ départ est requis" }),
@@ -58,18 +59,11 @@ const CreateCarForm = () => {
   });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    const response = await fetch("/api/carpool/new", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(values),
-    });
-    
-    const result = await response.json();
+    const result = await createCarpoolAction(values as CreateCarpoolData);
     if (result.success) {
-      form.reset();
-      router.push(`/carpool/${result.carpoolId}`);
+      router.push(`/carpool/${result.data?.id}`);
+    } else {
+      console.error("Error creating carpool:", result.error);
     }
   };
 

@@ -1,0 +1,552 @@
+"use server";
+
+/**
+ * DEPRECATED: This file now acts as a compatibility layer.
+ * Please use imports from './actions' directly for new code.
+ * 
+ * This file re-exports all functions from the new modular structure
+ * to maintain backward compatibility with existing imports.
+ */
+
+// Re-export all types with proper syntax for isolatedModules
+export type { 
+  CreateCarpoolData,
+  CarpoolActionResult,
+  CarpoolStatus,
+  CarpoolWithCreator,
+  CarpoolWithParticipants,
+  CarpoolDetailed,
+  ValidationResult,
+  ParticipantOperationResult
+} from "./actions/types";
+
+// Re-export all functions from the new modular structure
+export {
+  // Creation actions
+  createCarpoolAction,
+  createCarpoolTemplate,
+
+  // Query actions
+  getCarpoolsAndParticipants,
+  getCarpoolsWhereUserBelongs,
+  getFinishedCarpools,
+  getUserUnFinishedCarpools,
+  findUniqueCarpool,
+  getCarpoolStatus,
+  getCarpoolParticipants,
+  getCarpoolSoberDriver,
+  searchCarpools,
+
+  // Participant actions
+  joinCarpoolAction,
+  joinCarpoolWithCodeAction,
+  joinCarpoolAsSoberAction,
+  deleteParticipantAction,
+  swapSoberDriverAction,
+
+  // Management actions
+  finishCarpoolAction,
+  archiveCarpoolAction,
+  unarchiveCarpoolAction,
+  deleteCarpoolAction,
+  updateCarpoolAction,
+
+  // Validation utilities
+  validateCarpoolData,
+  validateInvitationCode,
+  validateUserId,
+  validateCarpoolId,
+  validateMultipleIds,
+
+  // Utility functions
+  enrichCarpoolsWithCreators,
+  createErrorResult,
+  createSuccessResult
+} from "./actions";
+  const currentUserId = await getCurrentUserId();
+
+  console.log(currentUserId);
+  
+  if (!currentUserId) {
+    return { success: false, error: "User not authenticated" };
+  }
+
+  const validationError = validateCarpoolData(data);
+  if (validationError) {
+    return { success: false, error: validationError };
+  }
+
+  try {
+    const invitationCode = generatePrivateCode();
+    const availableSeats = parseInt(data.availableSeats);
+    const isDriverSoberNeeded = Boolean(data.isDriverSoberNeeded);
+    const soberDriverFound = !isDriverSoberNeeded;
+
+    // Use transaction to ensure data consistency
+    const result = await prisma.$transaction(async (tx) => {
+      const carpool = await tx.carpool.create({
+        data: {
+          title: `${data.departure.trim()} → ${data.arrival.trim()}`,
+          departure: data.departure.trim(),
+          arrival: data.arrival.trim(),
+          description: data.description?.trim() || "",
+          departureDate: new Date(data.departureDate),
+          departureTime: data.departureTime,
+          availableSeats,
+          totalSeats: availableSeats,
+          isDriverSoberNeeded,
+          soberDriverFound,
+          isPrivate: Boolean(data.isPrivate),
+          invitationCode,
+          isArchived: false,
+          isFinished: false,
+          status: "ACTIVE",
+          creatorId: currentUserId,
+          soberDriverId: soberDriverFound ? currentUserId : null,
+        },
+      });
+
+      await tx.carpoolParticipants.create({
+        data: {
+          userId: currentUserId,
+          carpoolId: carpool.id,
+        },
+      });
+
+      return carpool;
+    });
+
+    return { success: true, data: result };
+  } catch (error) {
+    console.error("Error creating carpool:", error);
+    return { success: false, error: "Failed to create carpool" };
+  }
+}
+
+export type CarpoolWithCreator = Carpool & { creator: User };
+
+export async function getCarpoolsAndParticipants(): Promise<CarpoolWithCreator[]> {
+  const carpools = await prisma.carpool.findMany({
+    where: {
+      isFinished: false,
+      isArchived: false,
+      availableSeats: { gt: 0 },
+    },
+  });
+
+  const carpoolOwners = await prisma.user.findMany({
+    where: {
+      id: {
+        in: carpools.map(carpool => carpool.creatorId),
+      },
+    },
+  });
+
+  return carpools.map(carpool => ({
+    ...carpool,
+    creator: carpoolOwners.find(owner => owner.id === carpool.creatorId)!,
+  }));
+}
+
+export async function getCarpoolsWhereUserBelongs(userId: string): Promise<CarpoolWithCreator[]> {
+  const carpools = await prisma.carpool.findMany({
+    where: {
+      participants: { some: { userId } },
+      isFinished: false,
+      isArchived: false,
+    },
+  });
+
+  const carpoolOwners = await prisma.user.findMany({
+    where: {
+      id: {
+        in: carpools.map(carpool => carpool.creatorId),
+      },
+    },
+  });
+
+  return carpools.map(carpool => ({
+    ...carpool,
+    creator: carpoolOwners.find(owner => owner.id === carpool.creatorId)!,
+  }));
+}
+
+// Carpool joining
+export async function joinCarpoolAction(carpoolId: string, userId: string): Promise<CarpoolActionResult> {
+  if (!carpoolId || !userId) {
+    return { success: false, error: "Invalid carpool ID or user ID" };
+  }
+
+  try {
+    // Check if user is already a participant
+    const existingParticipant = await prisma.carpoolParticipants.findUnique({
+      where: { userId_carpoolId: { userId, carpoolId } },
+    });
+
+    if (existingParticipant) {
+      return { success: false, error: "User is already a participant" };
+    }
+
+    // Check if carpool exists and has available seats
+    const carpool = await prisma.carpool.findUnique({
+      where: { id: carpoolId },
+      include: { participants: true },
+    });
+
+
+    if (!carpool) {
+      return { success: false, error: "Carpool not found" };
+    }
+
+    if (carpool.isFinished || carpool.isArchived) {
+      return { success: false, error: "Carpool is no longer active" };
+    }
+
+    const participantCount = await prisma.carpoolParticipants.count({
+      where: { carpoolId }
+    });
+
+    if (participantCount >= carpool.availableSeats) {
+      return { success: false, error: "Carpool is full" };
+    }
+    
+    await prisma.carpoolParticipants.create({
+      data: { userId, carpoolId },
+    });
+    await prisma.carpool.update({
+      where: { id: carpoolId },
+      data: { availableSeats: carpool.availableSeats - 1 },
+    });
+
+ 
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error joining carpool:", error);
+    return { success: false, error: "Failed to join carpool" };
+  }
+}
+
+export async function joinCarpoolWithCodeAction(code: string, userId: string): Promise<CarpoolActionResult<Carpool>> {
+  if (!code?.trim() || !userId) {
+    return { success: false, error: "Invalid invitation code or user ID" };
+  }
+
+  try {
+    const carpool = await prisma.carpool.findUnique({
+      where: { invitationCode: code.trim() },
+      include: { participants: true },
+    });
+
+    if (!carpool) {
+      return { success: false, error: "Invalid invitation code" };
+    }
+
+    if (carpool.isFinished || carpool.isArchived) {
+      return { success: false, error: "Carpool is no longer active" };
+    }
+
+    if (carpool.participants.length >= carpool.availableSeats) {
+      return { success: false, error: "Carpool is full" };
+    }
+
+    // Check if user is already a participant
+    const existingParticipant = await prisma.carpoolParticipants.findUnique({
+      where: { userId_carpoolId: { userId, carpoolId: carpool.id } },
+    });
+
+    if (existingParticipant) {
+      return { success: false, error: "User is already a participant" };
+    }
+
+    await prisma.carpoolParticipants.create({
+      data: { userId, carpoolId: carpool.id },
+    });
+
+    return { success: true, data: carpool };
+  } catch (error) {
+    console.error("Error joining carpool with code:", error);
+    return { success: false, error: "Failed to join carpool" };
+  }
+}
+
+export async function joinCarpoolAsSoberAction(carpoolId: string, userId: string): Promise<CarpoolActionResult<Carpool>> {
+  if (!carpoolId || !userId) {
+    return { success: false, error: "Invalid carpool ID or user ID" };
+  }
+
+  try {
+    const carpool = await prisma.carpool.findUnique({
+      where: { id: carpoolId },
+      include: { participants: true },
+    });
+
+    if (!carpool) {
+      return { success: false, error: "Carpool not found" };
+    }
+
+    if (carpool.isFinished || carpool.isArchived) {
+      return { success: false, error: "Carpool is no longer active" };
+    }
+
+    if (carpool.soberDriverId) {
+      return { success: false, error: "Sober driver already assigned" };
+    }
+
+    if (!carpool.isDriverSoberNeeded) {
+      return { success: false, error: "This carpool doesn't need a sober driver" };
+    }
+
+    // Use transaction to ensure consistency
+    const result = await prisma.$transaction(async (tx) => {
+      // Add user as participant if not already
+      const existingParticipant = await tx.carpoolParticipants.findUnique({
+        where: { userId_carpoolId: { userId, carpoolId } },
+      });
+
+      if (!existingParticipant) {
+        await tx.carpoolParticipants.create({
+          data: { userId, carpoolId },
+        });
+      }
+
+      // Update carpool with sober driver
+      const updatedCarpool = await tx.carpool.update({
+        where: { id: carpoolId },
+        data: { 
+          soberDriverId: userId,
+          soberDriverFound: true,
+        },
+      });
+
+      return updatedCarpool;
+    }, {
+      timeout: 10000 // 10 seconds timeout
+    });
+
+    return { success: true, data: result };
+  } catch (error) {
+    console.error("Error joining as sober driver:", error);
+    return { success: false, error: "Failed to join as sober driver" };
+  }
+}
+
+export async function getFinishedCarpools(): Promise<CarpoolWithCreator[]> {
+  const currentUserId = await getCurrentUserId();
+  if (!currentUserId) {
+    return [];
+  }
+
+  const participants = await prisma.carpoolParticipants.findMany({
+    where: { userId: currentUserId, carpool: { isFinished: true, isArchived: false } },
+    include: { carpool: true },
+  });
+
+  const carpoolOwners = await prisma.user.findMany({
+    where: {
+      id: {
+        in: participants.map(participant => participant.carpool.creatorId),
+      },
+    },
+  });
+
+  const carpools = await prisma.carpool.findMany({
+    where: { id: { in: participants.map(participant => participant.carpoolId) } },
+  });
+
+  return carpools.map(carpool => ({
+    ...carpool,
+    creator: carpoolOwners.find(owner => owner.id === carpool.creatorId)!,
+  }));
+}
+
+// Carpool management
+export async function finishCarpoolAction(carpoolId: string): Promise<CarpoolActionResult> {
+  if (!carpoolId) {
+    return { success: false, error: "Invalid carpool ID" };
+  }
+
+  try {
+    const carpool = await prisma.carpool.findUnique({
+      where: { id: carpoolId },
+    });
+
+    if (!carpool) {
+      return { success: false, error: "Carpool not found" };
+    }
+
+    if (carpool.isFinished) {
+      return { success: false, error: "Carpool is already finished" };
+    }
+
+    await prisma.carpool.update({
+      where: { id: carpoolId },
+      data: { isFinished: true },
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error finishing carpool:", error);
+    return { success: false, error: "Failed to finish carpool" };
+  }
+}
+
+export async function deleteParticipantAction(carpoolId: string, participantId: string, currentUserId: string): Promise<CarpoolActionResult> {
+  if (!carpoolId || !participantId || !currentUserId) {
+    return { success: false, error: "Invalid carpool ID, participant ID, or current user ID" };
+  }
+
+  try {
+    const carpool = await prisma.carpool.findUnique({
+      where: { id: carpoolId },
+    });
+
+    if (!carpool) {
+      return { success: false, error: "Carpool not found" };
+    }
+
+    // Check if the participant exists
+    const participant = await prisma.carpoolParticipants.findUnique({
+      where: { userId_carpoolId: { userId: participantId, carpoolId } },
+    });
+
+    if (!participant) {
+      return { success: false, error: "Participant not found" };
+    }
+
+    const isCreator = carpool.creatorId === currentUserId;
+    const isParticipantCreator = carpool.creatorId === participantId;
+    const isCurrentUserParticipant = currentUserId === participantId;
+
+    // Rule 1: Le créateur ne peut pas se retirer lui-même
+    if (isParticipantCreator && isCurrentUserParticipant) {
+      return { success: false, error: "Le créateur ne peut pas se retirer lui-même" };
+    }
+
+    // Rule 2: Le créateur peut retirer tout le monde (sauf lui-même)
+    if (isCreator && !isParticipantCreator) {
+      // Creator can remove anyone except themselves
+      await prisma.carpoolParticipants.delete({
+        where: { userId_carpoolId: { userId: participantId, carpoolId } },
+      });
+
+      await prisma.carpool.update({
+        where: { id: carpoolId },
+        data: { availableSeats: carpool.availableSeats + 1 },
+      });
+
+      return { success: true };
+    }
+
+    // Rule 3: Les participants ne peuvent se retirer qu'eux-mêmes
+    if (isCurrentUserParticipant && !isParticipantCreator) {
+      // Participant can only remove themselves
+      await prisma.carpoolParticipants.delete({
+        where: { userId_carpoolId: { userId: participantId, carpoolId } },
+      });
+
+      await prisma.carpool.update({
+        where: { id: carpoolId },
+        data: { availableSeats: carpool.availableSeats + 1 },
+      });
+
+      return { success: true };
+    }
+
+    // If none of the above conditions are met, the action is not authorized
+    return { success: false, error: "Vous n'êtes pas autorisé à effectuer cette action" };
+
+  } catch (error) {
+    console.error("Error deleting participant:", error);
+    return { success: false, error: "Failed to remove participant" };
+  }
+}
+
+// Carpool queries
+export async function getCarpoolSoberDriver(carpoolId: string): Promise<string | null> {
+  if (!carpoolId) return null;
+
+  try {
+    const carpool = await prisma.carpool.findUnique({
+      where: { id: carpoolId },
+      select: { soberDriverId: true },
+    });
+    return carpool?.soberDriverId || null;
+  } catch (error) {
+    console.error("Error getting sober driver:", error);
+    return null;
+  }
+}
+
+export async function getUserUnFinishedCarpools(): Promise<Carpool[]> {
+  const currentUserId = await getCurrentUserId();
+  
+  if (!currentUserId) {
+    return [];
+  }
+
+  try {
+    return await prisma.carpool.findMany({
+      where: { 
+        isFinished: false, 
+        creatorId: currentUserId,
+      },
+      orderBy: { departureDate: 'asc' },
+    });
+  } catch (error) {
+    console.error("Error getting user carpools:", error);
+    return [];
+  }
+}
+
+export async function findUniqueCarpool(carpoolId: string): Promise<Carpool | null> {
+  if (!carpoolId) return null;
+
+  try {
+    return await prisma.carpool.findUnique({
+      where: { id: carpoolId },
+    });
+  } catch (error) {
+    console.error("Error finding carpool:", error);
+    return null;
+  }
+}
+
+export async function getCarpoolStatus(carpoolId: string): Promise<CarpoolStatus> {
+  if (!carpoolId) return "ongoing";
+
+  try {
+    const carpool = await prisma.carpool.findUnique({
+      where: { id: carpoolId },
+      select: { isFinished: true, isArchived: true },
+    });
+
+    if (!carpool) return "ongoing";
+    
+    if (carpool.isFinished) return "finished";
+    if (carpool.isArchived) return "archived";
+    return "ongoing";
+  } catch (error) {
+    console.error("Error getting carpool status:", error);
+    return "ongoing";
+  }
+}
+
+export async function getCarpoolParticipants(carpoolId: string): Promise<User[]> {
+  if (!carpoolId) return [];
+
+  try {
+    // Optimized query to get participants with user data in one go
+    const participants = await prisma.carpoolParticipants.findMany({
+      where: { carpoolId },
+      include: {
+        user: true,
+      },
+    });
+
+    return participants.map(p => p.user);
+  } catch (error) {
+    console.error("Error getting carpool participants:", error);
+    return [];
+  }
+}

@@ -25,8 +25,12 @@ export function CarpoolListCard({ carpool }: { carpool: Carpool & { creator: Use
 
   const joinCarpool = async (carpoolId: string) => {
     try {
-      await joinCarpoolAction(carpoolId, currentUserId as string);
-      router.push(`/carpool/${carpoolId}`);
+      const result = await joinCarpoolAction(carpoolId, currentUserId as string);
+      if (result.success) {
+        router.push(`/carpool/${carpoolId}`);
+      } else {
+        console.error("Error joining carpool:", result.error);
+      }
     } catch (error) {
       console.error("Error joining carpool:", error);
     }
