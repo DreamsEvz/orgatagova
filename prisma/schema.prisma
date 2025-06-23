@@ -130,6 +130,8 @@ model Carpool {
   soberDriver  User?                 @relation("SoberDriver", fields: [soberDriverId], references: [id])
   soberDriverId    String?
 
+  carpoolGroup CarpoolGroup?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -159,6 +161,19 @@ model CarpoolParticipants {
   @@index([userId])
   @@index([carpoolId])
   @@index([status])
+}
+
+model CarpoolGroup {
+  id String @id @default(cuid())
+  name String
+  description String?
+  carpoolId String @unique
+  carpool Carpool @relation(fields: [carpoolId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([carpoolId])
 }
 
 // Enums for better type safety
