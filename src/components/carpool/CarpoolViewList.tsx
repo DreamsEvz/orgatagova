@@ -50,7 +50,7 @@ export function CarpoolViewListCard({ carpool }: { carpool: Carpool | CarpoolWit
             <p className="text-gray-300">{carpool.isPrivate ? 'Privé' : 'Public'}</p>
           </div>
           <div className="col-span-2 space-y-2">
-            <span className="text-teal-400 font-medium block">Sam nécessaire</span>
+            <span className="text-teal-400 font-medium block">Conducteur sobre requis</span>
             <p className="text-gray-300">{carpool.isDriverSoberNeeded ? 'Oui' : 'Non'}</p>
           </div>
         </div>

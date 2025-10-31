@@ -7,6 +7,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";
+import { FaUserPlus, FaUserShield } from "react-icons/fa";
 
 export function CarpoolList({carpools }: { carpools: (Carpool & { creator: User })[] }) {
   return (
@@ -74,13 +75,15 @@ export function CarpoolListCard({ carpool }: { carpool: Carpool & { creator: Use
               onClick={() => joinCarpool(carpool.id)} 
               className="flex-1 bg-teal-500 hover:bg-teal-600 text-white font-bold transition-colors duration-200"
             >
+              <FaUserPlus className="mr-2" />
               Rejoindre
             </Button>
             <Button 
               onClick={() => joinCarpoolAsSober(carpool.id)} 
               className="flex-1 bg-purple-500 hover:bg-purple-600 text-white font-bold transition-colors duration-200"
             >
-              Rejoindre en tant que SAM
+              <FaUserShield className="mr-2" />
+              Rejoindre en tant que conducteur sobre
             </Button>
           </div>
         )}

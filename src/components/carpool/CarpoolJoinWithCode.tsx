@@ -13,7 +13,7 @@ export default function CarpoolJoinWithCode({ children }: { children: React.Reac
         <AlertDialogTrigger asChild>
           {children}
       </AlertDialogTrigger>
-      <AlertDialogContent className="bg-gray-800/60 border-gray-700 shadow-xl">
+      <AlertDialogContent className="bg-gray-800 border-gray-700 shadow-xl">
         <AlertDialogHeader>
           <AlertDialogTitle>Entrez le code du covoiturage</AlertDialogTitle>
         </AlertDialogHeader>
